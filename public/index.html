@@ -146,7 +146,9 @@ async function runAnalysis() {
     });
     if (!res.ok) throw new Error('Server error ' + res.status);
     const data = await res.json();
-    const raw = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
+   if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+const raw = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
+if (!raw) throw new Error('Empty response from API: ' + JSON.stringify(data));
     const d = JSON.parse(raw);
     stopTicker();
     document.getElementById('state-loading').style.display = 'none';
