@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinTech Company Analyzer — Nikita Boiaryntsev</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0a;
+    --bg2: #111111;
+    --bg3: #1a1a1a;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #f0f0f0;
+    --text2: #888;
+    --text3: #555;
+    --accent: #e8e8e8;
+    --green: #4ade80;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --teal: #2dd4bf;
+  }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* Header */
+  .header { margin-bottom: 48px; }
+  .logo-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+  .logo-mark {
+    width: 32px; height: 32px;
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-mark svg { width: 14px; height: 14px; fill: var(--text); }
+  .logo-label { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text2); }
+  .header h1 { font-size: 32px; font-weight: 500; color: var(--text); letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 8px; }
+  .header p { font-size: 14px; color: var(--text2); line-height: 1.6; }
+  .header .built-by { font-size: 12px; color: var(--text3); margin-top: 6px; }
+
+  /* Input */
+  .search-section { margin-bottom: 40px; }
+  .search-row { display: flex; gap: 10px; }
+  .search-row input {
+    flex: 1;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-family: 'Sora', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-row input::placeholder { color: var(--text3); }
+  .search-row input:focus { border-color: rgba(255,255,255,0.3); }
+  .search-row button {
+    background: var(--text);
+    color: var(--bg);
+    border: none;
+    border-radius: 10px;
+    padding: 14px 24px;
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.2s;
+  }
+  .search-row button:hover { opacity: 0.85; }
+  .search-row button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .examples { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .example-chip {
+    font-size: 12px;
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s;
+    background: transparent;
+    font-family: 'Sora', sans-serif;
+  }
+  .example-chip:hover { border-color: var(--border2); color: var(--text); }
+
+  /* States */
+  .state-empty {
+    text-align: center;
+    padding: 60px 20px;
+    border: 1px dashed var(--border);
+    border-radius: 16px;
+  }
+  .state-empty .icon { font-size: 28px; margin-bottom: 16px; color: var(--text3); }
+  .state-empty p { font-size: 13px; color: var(--text3); line-height: 1.7; }
+
+  .state-loading { text-align: center; padding: 60px 20px; }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 2px solid var(--border);
+    border-top-color: var(--text2);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto 20px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .state-loading p { font-size: 13px; color: var(--text2); }
+
+  .error-box {
+    background: rgba(248, 113, 113, 0.08);
+    border: 1px solid rgba(248, 113, 113, 0.2);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: var(--red);
+    margin-bottom: 20px;
+  }
+
+  /* Report */
+  .report { animation: rise 0.5s ease; }
+  @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  .report-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 28px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .report-name { font-size: 28px; font-weight: 500; letter-spacing: -0.02em; color: var(--text); margin-bottom: 6px; }
+  .report-meta { font-size: 13px; color: var(--text2); }
+
+  .score-box {
+    display: flex; flex-direction: column; align-items: center;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 20px;
+    min-width: 90px; flex-shrink: 0;
+  }
+  .score-num { font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 500; color: var(--text); line-height: 1; }
+  .score-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); margin-top: 6px; }
+
+  /* Metrics strip */
+  .metrics-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 24px; }
+  @media (max-width: 560px) { .metrics-strip { grid-template-columns: repeat(2, 1fr); } }
+  .metric-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+  .metric-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 8px; }
+  .metric-val { font-size: 14px; font-weight: 500; color: var(--text); }
+  .metric-val.bullish { color: var(--green); }
+  .metric-val.neutral { color: var(--text2); }
+  .metric-val.cautious { color: var(--amber); }
+
+  /* Cards grid */
+  .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  @media (max-width: 560px) { .cards-grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .card.full { grid-column: 1 / -1; }
+  .card-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); margin-bottom: 10px; }
+  .card-text { font-size: 13px; color: var(--text2); line-height: 1.7; }
+
+  /* Tags */
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .tag {
+    font-size: 11px; padding: 4px 12px;
+    border: 1px solid var(--border2);
+    border-radius: 100px;
+    color: var(--text2);
+  }
+
+  /* Ratings */
+  .ratings-list { display: flex; flex-direction: column; gap: 14px; }
+  .rating-row { display: flex; align-items: center; gap: 14px; }
+  .rating-lbl { font-size: 12px; color: var(--text2); width: 130px; flex-shrink: 0; }
+  .rating-track { flex: 1; height: 3px; background: var(--bg3); border-radius: 2px; }
+  .rating-fill { height: 3px; border-radius: 2px; background: var(--teal); transition: width 1.2s cubic-bezier(0.4,0,0.2,1); }
+  .rating-num { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text3); width: 28px; text-align: right; }
+
+  /* Footer */
+  .report-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 28px; padding-top: 20px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap; gap: 10px;
+  }
+  .footer-meta { font-size: 11px; color: var(--text3); }
+  .footer-new-btn {
+    font-family: 'Sora', sans-serif;
+    font-size: 12px; font-weight: 500;
+    background: transparent;
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    color: var(--text2);
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .footer-new-btn:hover { border-color: rgba(255,255,255,0.3); color: var(--text); }
+
+  /* Divider */
+  hr { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="header">
+    <div class="logo-row">
+      <div class="logo-mark">
+        <svg viewBox="0 0 14 14"><polygon points="7,1 13,13 1,13"/></svg>
+      </div>
+      <span class="logo-label">FinTech Analyzer</span>
+    </div>
+    <h1>Company Intelligence<br>Report</h1>
+    <p>AI-powered analysis — business model, market position,<br>regulatory status, and investment outlook.</p>
+    <p class="built-by">Built by Nikita Boiaryntsev · University of Glasgow</p>
+  </header>
+
+  <section class="search-section">
+    <div class="search-row">
+      <input type="text" id="company-input" placeholder="Enter a fintech company name..." />
+      <button id="analyze-btn" onclick="runAnalysis()">Analyze →</button>
+    </div>
+    <div class="examples">
+      <span class="example-chip" onclick="quickSearch('Revolut')">Revolut</span>
+      <span class="example-chip" onclick="quickSearch('Stripe')">Stripe</span>
+      <span class="example-chip" onclick="quickSearch('Wise')">Wise</span>
+      <span class="example-chip" onclick="quickSearch('Spribe')">Spribe</span>
+      <span class="example-chip" onclick="quickSearch('Monzo')">Monzo</span>
+      <span class="example-chip" onclick="quickSearch('Klarna')">Klarna</span>
+    </div>
+  </section>
+
+  <div id="error-box" class="error-box" style="display:none;"></div>
+
+  <div id="state-empty" class="state-empty">
+    <div class="icon">◎</div>
+    <p>Enter any fintech company above to generate<br>a full intelligence report in seconds.</p>
+  </div>
+
+  <div id="state-loading" class="state-loading" style="display:none;">
+    <div class="spinner"></div>
+    <p id="loading-text">Analyzing company data...</p>
+  </div>
+
+  <div id="report-container" style="display:none;"></div>
+
+</div>
+
+<script>
+const msgs = [
+  "Analyzing business model...",
+  "Mapping revenue streams...",
+  "Assessing market position...",
+  "Reviewing regulatory status...",
+  "Compiling intelligence report..."
+];
+
+let ticker;
+
+function startTicker() {
+  let i = 0;
+  const el = document.getElementById('loading-text');
+  if (el) el.textContent = msgs[0];
+  ticker = setInterval(() => {
+    i = (i + 1) % msgs.length;
+    if (el) el.textContent = msgs[i];
+  }, 1600);
+}
+
+function stopTicker() { clearInterval(ticker); }
+
+function quickSearch(name) {
+  document.getElementById('company-input').value = name;
+  runAnalysis();
+}
+
+async function runAnalysis() {
+  const input = document.getElementById('company-input');
+  const company = (input ? input.value : '').trim();
+  if (!company) return;
+
+  document.getElementById('state-empty').style.display = 'none';
+  document.getElementById('report-container').style.display = 'none';
+  document.getElementById('error-box').style.display = 'none';
+  document.getElementById('state-loading').style.display = 'block';
+  document.getElementById('analyze-btn').disabled = true;
+  startTicker();
+
+  const prompt = `You are a senior fintech analyst. Analyze "${company}" and return ONLY a valid JSON object with no markdown, no backticks, no extra text whatsoever. Use exactly this structure:
+{"name":"Official company name","founded":"Year","hq":"City, Country","category":"Fintech category e.g. Neobank","summary":"2-3 sentence overview max 65 words","business_model":"How they make money max 50 words","market_position":"Competitive standing max 45 words","key_risks":"Main risks max 40 words","regulatory":"Regulatory status and licenses max 35 words","tags":["tag1","tag2","tag3","tag4"],"ratings":{"innovation":85,"market_strength":70,"regulatory_compliance":80,"growth_potential":75},"overall_score":78,"outlook":"Bullish"}
+outlook must be exactly: Bullish, Neutral, or Cautious. All rating values must be integers 0-100. Return ONLY the JSON object, nothing else.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!res.ok) throw new Error('API responded with status ' + res.status);
+
+    const data = await res.json();
+    const raw = (data.content || [])
+      .filter(b => b.type === 'text')
+      .map(b => b.text)
+      .join('')
+      .replace(/```json|```/g, '')
+      .trim();
+
+    const d = JSON.parse(raw);
+    stopTicker();
+    document.getElementById('state-loading').style.display = 'none';
+    renderReport(d);
+
+  } catch(err) {
+    stopTicker();
+    document.getElementById('state-loading').style.display = 'none';
+    const eb = document.getElementById('error-box');
+    eb.style.display = 'block';
+    eb.textContent = '✕  ' + (err.message || 'Analysis failed. Please try again.');
+    document.getElementById('state-empty').style.display = 'block';
+  }
+
+  document.getElementById('analyze-btn').disabled = false;
+}
+
+function outlookClass(o) {
+  if (o === 'Bullish') return 'bullish';
+  if (o === 'Cautious') return 'cautious';
+  return 'neutral';
+}
+
+function renderReport(d) {
+  const now = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  const r = d.ratings || {};
+  const tags = (d.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+
+  const ratingRows = [
+    ['Innovation', r.innovation || 0],
+    ['Market strength', r.market_strength || 0],
+    ['Reg. compliance', r.regulatory_compliance || 0],
+    ['Growth potential', r.growth_potential || 0]
+  ].map(([lbl, val]) => `
+    <div class="rating-row">
+      <span class="rating-lbl">${lbl}</span>
+      <div class="rating-track">
+        <div class="rating-fill" style="width:${Math.round(val)}%"></div>
+      </div>
+      <span class="rating-num">${Math.round(val)}</span>
+    </div>
+  `).join('');
+
+  const html = `
+    <div class="report">
+      <div class="report-top">
+        <div>
+          <div class="report-name">${d.name || '—'}</div>
+          <div class="report-meta">${d.category || ''} &nbsp;·&nbsp; Est. ${d.founded || '—'} &nbsp;·&nbsp; ${d.hq || '—'}</div>
+        </div>
+        <div class="score-box">
+          <span class="score-num">${Math.round(d.overall_score) || '—'}</span>
+          <span class="score-lbl">Score</span>
+        </div>
+      </div>
+
+      <div class="metrics-strip">
+        <div class="metric-card">
+          <div class="metric-lbl">Category</div>
+          <div class="metric-val">${d.category || '—'}</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-lbl">Founded</div>
+          <div class="metric-val">${d.founded || '—'}</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-lbl">HQ</div>
+          <div class="metric-val">${d.hq || '—'}</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-lbl">Outlook</div>
+          <div class="metric-val ${outlookClass(d.outlook)}">${d.outlook || '—'}</div>
+        </div>
+      </div>
+
+      <div class="cards-grid">
+        <div class="card full">
+          <div class="card-label">Overview</div>
+          <div class="card-text">${d.summary || '—'}</div>
+          <div class="tags">${tags}</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Business model</div>
+          <div class="card-text">${d.business_model || '—'}</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Market position</div>
+          <div class="card-text">${d.market_position || '—'}</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Key risks</div>
+          <div class="card-text">${d.key_risks || '—'}</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Regulatory status</div>
+          <div class="card-text">${d.regulatory || '—'}</div>
+        </div>
+        <div class="card full">
+          <div class="card-label">Ratings breakdown</div>
+          <div class="ratings-list" style="margin-top:12px;">${ratingRows}</div>
+        </div>
+      </div>
+
+      <div class="report-footer">
+        <span class="footer-meta">Generated ${now} &nbsp;·&nbsp; AI-powered &nbsp;·&nbsp; For informational purposes only</span>
+        <button class="footer-new-btn" onclick="resetTool()">New analysis →</button>
+      </div>
+    </div>
+  `;
+
+  const container = document.getElementById('report-container');
+  container.innerHTML = html;
+  container.style.display = 'block';
+
+  setTimeout(() => {
+    document.querySelectorAll('.rating-fill').forEach(el => {
+      el.style.width = el.style.width;
+    });
+  }, 100);
+}
+
+function resetTool() {
+  document.getElementById('report-container').style.display = 'none';
+  document.getElementById('state-empty').style.display = 'block';
+  document.getElementById('company-input').value = '';
+  document.getElementById('company-input').focus();
+}
+
+document.getElementById('company-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') runAnalysis();
+});
+</script>
+</body>
+</html>
