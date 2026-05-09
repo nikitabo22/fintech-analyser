@@ -501,49 +501,42 @@ function renderCompare(dA, dB) {
   }, 100);
 }
  
-async function downloadPDF(name) {
-  const btn = document.getElementById('pdf-btn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Generating...'; }
-  try {
-    const { jsPDF } = window.jspdf;
-    const element = document.getElementById('report-container');
-    const canvas = await html2canvas(element, {
-      backgroundColor: '#0a0a0a',
-      scale: 2,
-      useCORS: true,
-      logging: false
-    });
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    const pageW = pdf.internal.pageSize.getWidth();
-    const pageH = pdf.internal.pageSize.getHeight();
-    const imgW = pageW;
-    const imgH = (canvas.height * pageW) / canvas.width;
-    let y = 0;
-    if (imgH <= pageH) {
-      pdf.addImage(imgData, 'PNG', 0, 0, imgW, imgH);
-    } else {
-      let remaining = imgH;
-      let sourceY = 0;
-      while (remaining > 0) {
-        const sliceH = Math.min(pageH, remaining);
-        const sliceCanvas = document.createElement('canvas');
-        sliceCanvas.width = canvas.width;
-        sliceCanvas.height = (sliceH / imgH) * canvas.height;
-        const ctx = sliceCanvas.getContext('2d');
-        ctx.drawImage(canvas, 0, sourceY * canvas.height / imgH, canvas.width, sliceCanvas.height, 0, 0, canvas.width, sliceCanvas.height);
-        if (y > 0) pdf.addPage();
-        pdf.addImage(sliceCanvas.toDataURL('image/png'), 'PNG', 0, 0, imgW, sliceH);
-        remaining -= sliceH;
-        sourceY += sliceH;
-        y += sliceH;
+function downloadPDF(name) {
+  const style = document.createElement('style');
+  style.id = 'print-style';
+  style.textContent = `
+    @media print {
+      body { background: white !important; color: #111 !important; }
+      .page { padding: 20px !important; max-width: 100% !important; }
+      .mode-tabs, .search-section, .footer-btns, #error-box, #state-empty, #state-loading { display: none !important; }
+      .header { display: none !important; }
+      .report, .compare-report { animation: none !important; }
+      .card, .metric-card, .compare-company, .compare-radar, .compare-row-card, .winner-banner {
+        background: #f8f8f8 !important; border-color: #ddd !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact;
       }
+      .report-name, .compare-name { color: #111 !important; }
+      .report-meta, .compare-meta, .card-text, .compare-row-item { color: #444 !important; }
+      .metric-lbl, .card-label, .compare-row-label, .rating-lbl, .score-lbl { color: #777 !important; }
+      .metric-val, .score-num, .rating-num { color: #111 !important; }
+      .tag { border-color: #ccc !important; color: #555 !important; }
+      .rating-track, .compare-bar-track { background: #e0e0e0 !important; }
+      .rating-fill { background: #0d9488 !important; }
+      .compare-bar-fill-a { background: #0d9488 !important; }
+      .compare-bar-fill-b { background: #7c3aed !important; }
+      .winner-text { color: #111 !important; }
+      .footer-meta { color: #999 !important; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
-    pdf.save(`${name.replace(/\s+/g,'-').toLowerCase()}-fintech-report.pdf`);
-  } catch(e) {
-    alert('PDF generation failed: ' + e.message);
-  }
-  if (btn) { btn.disabled = false; btn.textContent = '↓ Download PDF'; }
+  `;
+  document.head.appendChild(style);
+  const prevTitle = document.title;
+  document.title = name + ' — FinTech Intelligence Report';
+  window.print();
+  setTimeout(() => {
+    document.head.removeChild(style);
+    document.title = prevTitle;
+  }, 1000);
 }
  
 function resetTool() {
@@ -558,3 +551,4 @@ document.getElementById('company-b').addEventListener('keydown', e => { if(e.key
 </script>
 </body>
 </html>
+ 
