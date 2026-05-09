@@ -102,6 +102,8 @@
   .footer-pdf-btn:hover { opacity: 0.85; }
   .footer-pdf-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .footer-btns { display: flex; gap: 8px; }
+  .footer-share-btn { font-family: 'Sora', sans-serif; font-size: 12px; font-weight: 500; background: transparent; border: 1px solid var(--border2); border-radius: 8px; color: var(--text2); padding: 6px 14px; cursor: pointer; transition: all 0.15s; }
+  .footer-share-btn:hover { border-color: rgba(255,255,255,0.3); color: var(--text); }
  
   /* Radar chart */
   .radar-wrap { position: relative; width: 100%; max-width: 320px; margin: 0 auto; }
@@ -395,8 +397,9 @@ function renderReport(d) {
       <div class="report-footer">
         <span class="footer-meta">Generated ${now} · AI-powered · For informational purposes only</span>
         <div class="footer-btns">
-          <button class="footer-pdf-btn" id="pdf-btn" onclick="downloadPDF('${d.name||'report'}')">↓ Download PDF</button>
-          <button class="footer-new-btn" onclick="resetTool()">New analysis →</button>
+          <button class="footer-share-btn" onclick="shareReport('${(d.name||'').replace(/'/g,"\\'")}')">↗ Share</button>
+          <button class="footer-pdf-btn" id="pdf-btn" onclick="downloadPDF('${d.name||'report'}')">↓ PDF</button>
+          <button class="footer-new-btn" onclick="resetTool()">New →</button>
         </div>
       </div>
     </div>`;
@@ -485,8 +488,9 @@ function renderCompare(dA, dB) {
       <div class="report-footer">
         <span class="footer-meta">Generated ${now} · AI-powered · For informational purposes only</span>
         <div class="footer-btns">
-          <button class="footer-pdf-btn" id="pdf-btn" onclick="downloadPDF('${dA.name}-vs-${dB.name}')">↓ Download PDF</button>
-          <button class="footer-new-btn" onclick="resetTool()">New analysis →</button>
+          <button class="footer-share-btn" onclick="shareReport('${(dA.name||'').replace(/'/g,"\\'")} vs ${(dB.name||'').replace(/'/g,"\\'")}')">↗ Share</button>
+          <button class="footer-pdf-btn" id="pdf-btn" onclick="downloadPDF('${dA.name}-vs-${dB.name}')">↓ PDF</button>
+          <button class="footer-new-btn" onclick="resetTool()">New →</button>
         </div>
       </div>
     </div>`;
@@ -539,6 +543,17 @@ function downloadPDF(name) {
   }, 1000);
 }
  
+function shareReport(name) {
+  const url = `${window.location.origin}${window.location.pathname}?q=${encodeURIComponent(name)}`;
+  navigator.clipboard.writeText(url).then(() => {
+    const btns = document.querySelectorAll('.footer-share-btn');
+    btns.forEach(btn => { btn.textContent = '✓ Copied!'; btn.style.color = 'var(--green)'; });
+    setTimeout(() => {
+      btns.forEach(btn => { btn.textContent = '↗ Share'; btn.style.color = ''; });
+    }, 2000);
+  });
+}
+ 
 function resetTool() {
   document.getElementById('report-container').style.display = 'none';
   document.getElementById('state-empty').style.display = 'block';
@@ -548,7 +563,13 @@ function resetTool() {
 document.getElementById('company-input').addEventListener('keydown', e => { if(e.key==='Enter') runAnalysis(); });
 document.getElementById('company-a').addEventListener('keydown', e => { if(e.key==='Enter') runCompare(); });
 document.getElementById('company-b').addEventListener('keydown', e => { if(e.key==='Enter') runCompare(); });
+ 
+// Auto-load from URL param e.g. ?q=Revolut
+const urlParam = new URLSearchParams(window.location.search).get('q');
+if (urlParam) {
+  document.getElementById('company-input').value = urlParam;
+  setTimeout(() => runAnalysis(), 300);
+}
 </script>
 </body>
 </html>
- 
