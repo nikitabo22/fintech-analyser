@@ -105,6 +105,39 @@
   .footer-share-btn { font-family: 'Sora', sans-serif; font-size: 12px; font-weight: 500; background: transparent; border: 1px solid var(--border2); border-radius: 8px; color: var(--text2); padding: 6px 14px; cursor: pointer; transition: all 0.15s; }
   .footer-share-btn:hover { border-color: rgba(255,255,255,0.3); color: var(--text); }
  
+  /* New blocks */
+  .verdict-box { display: flex; align-items: center; gap: 16px; }
+  .verdict-score { font-family: 'DM Mono', monospace; font-size: 36px; font-weight: 500; line-height: 1; }
+  .verdict-score.strong-buy { color: var(--green); }
+  .verdict-score.buy { color: #86efac; }
+  .verdict-score.hold { color: var(--amber); }
+  .verdict-score.avoid { color: var(--red); }
+  .verdict-label { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .verdict-label.strong-buy { color: var(--green); }
+  .verdict-label.buy { color: #86efac; }
+  .verdict-label.hold { color: var(--amber); }
+  .verdict-label.avoid { color: var(--red); }
+  .verdict-reason { font-size: 12px; color: var(--text2); line-height: 1.5; }
+  .verdict-disclaimer { font-size: 10px; color: var(--text3); margin-top: 6px; }
+ 
+  .ipo-bar-wrap { margin-top: 10px; }
+  .ipo-bar-track { width: 100%; height: 6px; background: var(--bg3); border-radius: 3px; margin-bottom: 6px; }
+  .ipo-bar-fill { height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--teal), var(--green)); transition: width 1.2s ease; }
+  .ipo-label-row { display: flex; justify-content: space-between; align-items: center; }
+  .ipo-label { font-size: 13px; font-weight: 500; color: var(--teal); }
+  .ipo-score { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text3); }
+ 
+  .competitor-list { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+  .competitor-item { display: flex; align-items: flex-start; gap: 10px; }
+  .competitor-name { font-size: 13px; font-weight: 500; color: var(--text); min-width: 90px; flex-shrink: 0; cursor: pointer; transition: color 0.15s; }
+  .competitor-name:hover { color: var(--teal); }
+  .competitor-note { font-size: 12px; color: var(--text2); line-height: 1.5; }
+ 
+  .people-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .person-chip { background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 8px; padding: 8px 12px; }
+  .person-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .person-role { font-size: 11px; color: var(--text3); margin-top: 2px; }
+ 
   /* Radar chart */
   .radar-wrap { position: relative; width: 100%; max-width: 320px; margin: 0 auto; }
  
@@ -393,6 +426,60 @@ function renderReport(d) {
             <div class="radar-wrap"><canvas id="radar-canvas"></canvas></div>
           </div>
         </div>
+ 
+        ${d.invest_verdict ? `
+        <div class="card">
+          <div class="card-label">Investment verdict</div>
+          <div class="verdict-box">
+            <div class="verdict-score ${(d.invest_verdict.label||'').toLowerCase().replace(' ','-')}">${Math.round(d.invest_verdict.score)||'—'}</div>
+            <div>
+              <div class="verdict-label ${(d.invest_verdict.label||'').toLowerCase().replace(' ','-')}">${d.invest_verdict.label||'—'}</div>
+              <div class="verdict-reason">${d.invest_verdict.reason||''}</div>
+              <div class="verdict-disclaimer">${d.invest_verdict.disclaimer||''}</div>
+            </div>
+          </div>
+        </div>` : ''}
+ 
+        ${d.ipo_readiness ? `
+        <div class="card">
+          <div class="card-label">IPO Readiness</div>
+          <div class="ipo-bar-wrap">
+            <div class="ipo-bar-track"><div class="ipo-bar-fill" style="width:${d.ipo_readiness.score||0}%"></div></div>
+            <div class="ipo-label-row">
+              <span class="ipo-label">${d.ipo_readiness.label||'—'}</span>
+              <span class="ipo-score">${d.ipo_readiness.score||0}/100</span>
+            </div>
+            <div style="font-size:12px; color:var(--text2); margin-top:6px;">${d.ipo_readiness.note||''}</div>
+          </div>
+        </div>` : ''}
+ 
+        ${d.market_size ? `
+        <div class="card">
+          <div class="card-label">Market size</div>
+          <div class="card-text" style="font-size:15px; font-weight:500; color:var(--text);">${d.market_size}</div>
+        </div>` : ''}
+ 
+        ${d.competitors && d.competitors.length ? `
+        <div class="card full">
+          <div class="card-label">Key competitors</div>
+          <div class="competitor-list">${d.competitors.map(c=>`
+            <div class="competitor-item">
+              <span class="competitor-name" onclick="quickSearch('${(c.name||'').replace(/'/g,"\\'")}')">↗ ${c.name}</span>
+              <span class="competitor-note">${c.note||''}</span>
+            </div>`).join('')}
+          </div>
+        </div>` : ''}
+ 
+        ${d.key_people && d.key_people.length ? `
+        <div class="card full">
+          <div class="card-label">Key people</div>
+          <div class="people-list">${d.key_people.map(p=>`
+            <div class="person-chip">
+              <div class="person-name">${p.name||''}</div>
+              <div class="person-role">${p.role||''}</div>
+            </div>`).join('')}
+          </div>
+        </div>` : ''}
       </div>
       <div class="report-footer">
         <span class="footer-meta">Generated ${now} · AI-powered · For informational purposes only</span>
